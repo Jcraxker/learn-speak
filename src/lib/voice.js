@@ -13,9 +13,11 @@ import {
 
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const VOICE_BY_LANG = { es: 'Kore', en: 'Puck' };
-const SILENCE_DB = -38;
+const VOICE_DB = -30; // trigger: near-mic voice (hackathon music won't reach it)
+const SILENCE_DB = -40; // silence floor with hysteresis gap
+const MIN_VOICE_MS = 700; // ignore short bursts (claps, beats)
 const SILENCE_MS = 1800;
-const MAX_RECORD_MS = 60000;
+const MAX_RECORD_MS = 45000;
 
 let bestVoice = null;
 
@@ -40,6 +42,7 @@ async function pickBestVoice(lang) {
 }
 
 let currentPlayer = null;
+let speechGen = 0; // cancels stale TTS: only latest speak() may play
 
 function releasePlayer() {
   if (currentPlayer) {
@@ -54,11 +57,13 @@ function releasePlayer() {
 
 export async function speak(text, lang) {
   const target = lang === 'es' ? 'es' : 'en';
+  const my = ++speechGen;
   try {
-    await speakNeural(text, target);
+    await speakNeural(text, target, my);
     console.log('[tts] neural ok', target);
     return;
   } catch (e) {
+    if (String(e?.message || e) === 'stale') return; // superseded, stay silent
     console.log('[tts] neural fail:', String(e?.message || e).slice(0, 160));
   }
   try {
@@ -77,7 +82,7 @@ export async function speak(text, lang) {
   }
 }
 
-export async function speakNeural(text, lang) {
+export async function speakNeural(text, lang, gen) {
   const key = process.env.EXPO_PUBLIC_GEMINI_KEY;
   if (!key) throw new Error('no-key');
   const res = await fetch(
@@ -99,6 +104,7 @@ export async function speakNeural(text, lang) {
     }
   );
   if (!res.ok) throw new Error(`http-${res.status}`);
+  if (gen !== undefined && gen !== speechGen) throw new Error('stale');
   const data = await res.json();
   const b64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!b64) throw new Error('empty-audio');
@@ -143,6 +149,7 @@ function wavFromPcmB64(b64) {
 }
 
 export function stopSpeak() {
+  speechGen++; // invalidate in-flight TTS so late audio never plays
   try {
     Speech.stop();
   } catch (e) {
@@ -176,13 +183,26 @@ export async function startSmartRecord({ onAutoStop }) {
   if (!perm.granted) throw new Error('mic-denied');
   await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
   recorder = new AudioModule.AudioRecorder({
-    ...(RecordingPresets?.HIGH_QUALITY ?? {}),
+    extension: '.m4a',
+    sampleRate: 16000, // STT-optimal, smaller upload, faster transcribe
+    numberOfChannels: 1,
+    bitRate: 32000,
+    android: {
+      outputFormat: 'mpeg4',
+      audioEncoder: 'aac',
+      audioSource: 'voice_recognition', // NS + AGC tuned for speech
+    },
+    ios: {
+      outputFormat: 'MPEG4AAC',
+      audioQuality: 'MAX',
+    },
     isMeteringEnabled: true,
   });
   await recorder.prepareToRecordAsync();
   recorder.record();
 
   let quietMs = 0;
+  let voiceMs = 0;
   let heardVoice = false;
   let elapsed = 0;
   meterTimer = setInterval(async () => {
@@ -191,16 +211,20 @@ export async function startSmartRecord({ onAutoStop }) {
       const db = st?.metering;
       elapsed += 300;
       if (typeof db === 'number') {
-        if (db > SILENCE_DB) {
-          heardVoice = true;
+        if (db > VOICE_DB) {
+          voiceMs += 300;
           quietMs = 0;
-        } else if (heardVoice) {
+          if (voiceMs >= MIN_VOICE_MS) heardVoice = true;
+        } else if (db < SILENCE_DB && heardVoice) {
+          // hysteresis gap (-40..-30): music hum, hold last state
           quietMs += 300;
           if (quietMs >= SILENCE_MS) {
             const uri = await stopSmartRecord();
             onAutoStop?.(uri);
             return;
           }
+        } else if (heardVoice) {
+          quietMs = 0; // in-between band: speaking continues
         }
       }
       if (elapsed >= MAX_RECORD_MS) {
@@ -253,7 +277,7 @@ export async function transcribeAudio(uri) {
         contents: [
           {
             parts: [
-              { text: 'Transcribe este audio exactamente, sin comentarios. Solo el texto.' },
+              { text: 'Transcribe solo la voz principal cercana. Ignora musica de fondo, ruido y otras voces. Sin comentarios, solo el texto.' },
               { inline_data: { mime_type: 'audio/m4a', data: base64 } },
             ],
           },
