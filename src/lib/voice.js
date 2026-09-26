@@ -6,7 +6,6 @@
 import * as Speech from 'expo-speech';
 import {
   AudioModule,
-  AudioRecorder,
   RecordingPresets,
   createAudioPlayer,
   setAudioModeAsync,
@@ -176,7 +175,10 @@ export async function startSmartRecord({ onAutoStop }) {
   console.log('[mic] permission granted:', perm.granted);
   if (!perm.granted) throw new Error('mic-denied');
   await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-  recorder = new AudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  recorder = new AudioModule.AudioRecorder({
+    ...(RecordingPresets?.HIGH_QUALITY ?? {}),
+    isMeteringEnabled: true,
+  });
   await recorder.prepareToRecordAsync();
   recorder.record();
 
