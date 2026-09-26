@@ -6,14 +6,18 @@
     "orientation": "portrait",
     "scheme": "learnspeak",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.learnspeak.app",
       "versionCode": 1,
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -21,7 +25,8 @@
         {
           "microphonePermission": "Allow LearnSpeak to use the microphone for pronunciation practice."
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }
