@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { isRecorderAvailable, speak, stopSpeak, toggleRecord, transcribeAudio } from '../lib/voice';
+import { isRecorderAvailable, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
 
 // Props: mensajes [{rol, texto}], onSend(texto), bloqueado, lang ('es'|'en' for TTS)
 // Texto siempre disponible; microfono opcional con fallback a teclado.
@@ -20,21 +20,49 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
   async function microfono() {
     if (bloqueado) return;
     setSttMsg('');
-    try {
-      const r = await toggleRecord();
-      if (r.recording) {
-        setGrabando(true);
-        return;
+    // Manual stop while recording.
+    if (grabando) {
+      try {
+        const uri = await stopSmartRecord();
+        setGrabando(false);
+        if (uri) {
+          setSttMsg('Transcribiendo...');
+          const t = await transcribeAudio(uri);
+          setSttMsg('');
+          if (t) onSend(t);
+        } else {
+          setSttMsg('');
+        }
+      } catch (e) {
+        setGrabando(false);
+        setSttMsg('No se pudo transcribir, usa el teclado.');
       }
-      setGrabando(false);
-      setSttMsg('Transcribiendo...');
-      const t = await transcribeAudio(r.uri);
-      setSttMsg('');
-      if (t) onSend(t);
+      return;
+    }
+    try {
+      await startSmartRecord({
+        onLevel: () => {},
+        onAutoStop: async (uri) => {
+          setGrabando(false);
+          if (!uri) {
+            setSttMsg('');
+            return;
+          }
+          setSttMsg('Transcribiendo...');
+          try {
+            const t = await transcribeAudio(uri);
+            setSttMsg('');
+            if (t) onSend(t);
+          } catch (e) {
+            setSttMsg('No se pudo transcribir, usa el teclado.');
+          }
+        },
+      });
+      setGrabando(true);
+      setSttMsg('Habla... se envia solo al callar.');
     } catch (e) {
-      setGrabando(false);
       const m = String(e?.message || e);
-      setSttMsg(m === 'mic-denied' ? 'Permiso de microfono denegado, usa el teclado.' : 'No se pudo transcribir, usa el teclado.');
+      setSttMsg(m === 'mic-denied' ? 'Permiso de microfono denegado, usa el teclado.' : 'Microfono no disponible, usa el teclado.');
     }
   }
 

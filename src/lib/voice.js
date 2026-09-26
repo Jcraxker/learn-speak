@@ -37,6 +37,71 @@ export function isRecorderAvailable() {
 }
 
 let recording = null;
+let meterTimer = null;
+
+// Smart record: starts mic and auto-stops after ~1.8s of silence (metering).
+// Pure JS + expo-av, works in Expo Go. Callbacks keep Chat UI live.
+// onLevel(db) -> live meter (-160..0). onAutoStop(uri) -> silence detected.
+export async function startSmartRecord({ onLevel, onAutoStop }) {
+  if (!Av) throw new Error('recorder-unavailable');
+  const { Audio } = Av;
+  const perm = await Audio.requestPermissionsAsync();
+  if (!perm.granted) throw new Error('mic-denied');
+  await Audio.setAudioModeAsync({
+    allowsRecordingIOS: true,
+    playsInSilentModeIOS: true,
+  });
+  recording = new Audio.Recording();
+  await recording.prepareToRecordAsync({
+    ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+    isMeteringEnabled: true,
+  });
+  await recording.startAsync();
+
+  let quietMs = 0;
+  let heardVoice = false;
+  meterTimer = setInterval(async () => {
+    try {
+      const st = await recording.getStatusAsync();
+      if (!st.canRecord) return;
+      const db = st.metering ?? -160;
+      onLevel?.(db);
+      if (db > -38) {
+        heardVoice = true;
+        quietMs = 0;
+      } else if (heardVoice) {
+        quietMs += 300;
+        if (quietMs >= 1800) {
+          const uri = await stopSmartRecord();
+          onAutoStop?.(uri);
+        }
+      }
+    } catch (e) {
+      // metering hiccup — ignore, keep recording
+    }
+  }, 300);
+  return true;
+}
+
+export async function stopSmartRecord() {
+  if (meterTimer) {
+    clearInterval(meterTimer);
+    meterTimer = null;
+  }
+  if (!recording) return null;
+  try {
+    await recording.stopAndUnloadAsync();
+  } catch (e) {
+    // already stopped
+  }
+  const uri = recording.getURI();
+  recording = null;
+  return uri;
+}
+
+export function isSmartRecording() {
+  return !!recording;
+}
 
 export async function toggleRecord() {
   if (!Av) throw new Error('recorder-unavailable');
