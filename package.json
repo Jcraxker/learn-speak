@@ -1,7 +1,7 @@
 {
   "name": "learnspeak",
   "version": "1.0.0",
-  "main": "App.js",
+  "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "start:tunnel": "expo start --tunnel",
