@@ -47,11 +47,10 @@ Meta: una sesión mobile-first — elegir dirección (EN→ES / ES→EN), nivel,
 * **H2.5-H3.5:** TTS + styling + feedback summary
 * **H3.5-H4:** EAS build + live demo recording
 
-## Team / Equipo
-
-* **Jack Fallas (backend / AI layer):** `lib/ai.js`, prompts, session feedback
-* **Frontend 1:** setup screen + session timer
-* **Frontend 2:** chat UI + styling + demo build
+## Equipo (3)
+- Jack Fallas (backend / AI layer: `lib/ai.js`, prompts, feedback)
+- Henry Lima (frontend 1: setup + timer)
+- Oliver Merida (frontend 2: chat UI + TTS + build/demo)
 
 ## Run / Ejecución
 
@@ -73,4 +72,4 @@ Todos los derechos reservados bajo la [licencia](./LICENSE) de Jack Fallas. Publ
 
 ---
 
-**Author / Autor:** [Jack Fallas](https://github.com/Jcraxker)
+**Author / Autor:** LearnSpeak Team — Jack Fallas, Henry Lima, Oliver Merida ([Jcraxker](https://github.com/Jcraxker))

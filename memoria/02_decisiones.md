@@ -1,9 +1,9 @@
 # Decisiones Técnicas — LearnSpeak
 
-## D1 — React para velocidad (2026-09-26)
-**Decisión:** Trabajar en React (web móvil, no React Native/Expo) para ir más rápido.
-**Por qué:** El equipo domina React web, evita configurar Expo/EAS y el jurado puede probar con URL. Se compensa lo "100% móvil" con diseño mobile-first + PWA instalable si alcanza el tiempo.
-**Riesgo:** No es app nativa de tienda. Se mitiga con responsive estricto (max-width 480px, viewport, touch targets grandes).
+## D1 — React Native + Expo, APK obligatoria (2026-09-26, corregido)
+**Decisión:** App 100% móvil con React Native + Expo. Dev en Expo Go con tunnel, entrega final en APK (EAS Build) para el jurado.
+**Por qué:** Requisito de la hackathon: full mobile instalable, no vale URL web. Vite queda descartado.
+**Costo:** EAS Build tarda 15-30 min en nube. Se lanza en H3.5 sin falta, con cuenta Expo del equipo. Diseño mobile-first estricto (360-480px).
 
 ## D2 — Sin servidor, llamada directa a Gemini (2026-09-26)
 **Por qué:** Ahorra ~1h vs montar Express. La key vive solo en `.env` local, nunca en git.
