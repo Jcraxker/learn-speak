@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { C, R, T } from '../theme';
 
 const DIRECCIONES = [
   { id: 'en-es', label: 'EN → ES' },
@@ -17,21 +18,22 @@ export default function Setup({ onStart }) {
   const [duracionMin, setDuracionMin] = useState(5);
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.title}>LearnSpeak</Text>
+    <ScrollView contentContainerStyle={styles.wrap}>
+      <Text style={styles.brand}>Learn'Speak</Text>
+      <Text style={styles.tag}>Tu profesor de idiomas en el bolsillo</Text>
       <Text style={styles.h}>Direccion</Text>
       <Row>
         {DIRECCIONES.map((d) => (
           <Chip key={d.id} label={d.label} active={direccion === d.id} onPress={() => setDireccion(d.id)} />
         ))}
       </Row>
-      <Text style={styles.h}>Nivel</Text>
+      <Text style={styles.h}>Tu nivel</Text>
       <Row>
         {NIVELES.map((n) => (
           <Chip key={n} label={n} active={nivel === n} onPress={() => setNivel(n)} />
         ))}
       </Row>
-      <Text style={styles.h}>Tema</Text>
+      <Text style={styles.h}>Tema de hoy</Text>
       <Row>
         {TEMAS.map((t) => (
           <Chip key={t} label={t} active={tema === t} onPress={() => setTema(t)} />
@@ -49,7 +51,7 @@ export default function Setup({ onStart }) {
       >
         <Text style={styles.goText}>COMENZAR</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -66,14 +68,15 @@ function Chip({ label, active, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 20, gap: 8, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
-  h: { fontSize: 13, fontWeight: '600', opacity: 0.6, marginTop: 6 },
+  wrap: { padding: 20, gap: 8, justifyContent: 'center', flexGrow: 1, backgroundColor: C.bg },
+  brand: { fontSize: T.title, fontWeight: '800', textAlign: 'center', color: C.ink },
+  tag: { textAlign: 'center', color: C.muted, marginBottom: 10, fontSize: T.small },
+  h: { fontSize: T.small, fontWeight: '700', color: C.muted, marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: '#131317', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
-  chipOn: { backgroundColor: '#131317' },
-  chipText: { fontWeight: '600' },
+  chip: { borderWidth: 1.5, borderColor: C.line, backgroundColor: C.soft, borderRadius: R.pill, paddingVertical: 9, paddingHorizontal: 15 },
+  chipOn: { backgroundColor: C.ink, borderColor: C.ink },
+  chipText: { fontWeight: '600', color: C.ink, fontSize: T.body },
   chipTextOn: { color: '#fff' },
-  go: { backgroundColor: '#131317', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 16 },
-  goText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  go: { backgroundColor: C.ink, borderRadius: R.md, padding: 16, alignItems: 'center', marginTop: 18 },
+  goText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 1 },
 });

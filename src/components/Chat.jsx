@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { C, R, T } from '../theme';
 import { isRecorderAvailable, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
 
 // Props: mensajes [{rol, texto}], onSend(texto), bloqueado, lang ('es'|'en' for TTS)
@@ -76,7 +77,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
         onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
           <View style={[styles.bubble, item.rol === 'user' ? styles.user : styles.ai]}>
-            <Text>{item.texto}</Text>
+            <Text style={styles.bubbleText}>{item.texto}</Text>
             {item.rol === 'ai' && (
               <Pressable onPress={() => speak(item.texto, lang)} style={styles.listen}>
                 <Text style={styles.listenText}>Escuchar</Text>
@@ -109,18 +110,19 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1 },
+  wrap: { flex: 1, backgroundColor: C.bg },
   list: { flex: 1, padding: 12 },
-  bubble: { padding: 10, borderRadius: 12, marginBottom: 8, maxWidth: '85%' },
-  user: { backgroundColor: '#c2c1ff', alignSelf: 'flex-end' },
-  ai: { backgroundColor: '#eee', alignSelf: 'flex-start' },
+  bubble: { padding: 11, borderRadius: R.md, marginBottom: 8, maxWidth: '85%' },
+  bubbleText: { fontSize: T.body, lineHeight: 21, color: C.ink },
+  user: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 4 },
+  ai: { backgroundColor: C.aiBubble, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
   listen: { marginTop: 6 },
-  listenText: { fontSize: 12, fontWeight: '600', opacity: 0.6 },
-  stt: { fontSize: 12, fontStyle: 'italic', opacity: 0.6, paddingHorizontal: 12 },
-  row: { flexDirection: 'row', padding: 10, gap: 8, borderTopWidth: 1, borderColor: '#eee' },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
-  send: { backgroundColor: '#131317', borderRadius: 20, paddingHorizontal: 16, justifyContent: 'center' },
-  sendText: { color: '#fff', fontWeight: '600' },
-  mic: { borderWidth: 1, borderColor: '#131317', borderRadius: 20, paddingHorizontal: 12, justifyContent: 'center' },
-  micOn: { backgroundColor: '#f5b2e0' },
+  listenText: { fontSize: 12, fontWeight: '700', color: C.surface },
+  stt: { fontSize: 12, fontStyle: 'italic', color: C.muted, paddingHorizontal: 12 },
+  row: { flexDirection: 'row', padding: 10, gap: 8, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg },
+  input: { flex: 1, borderWidth: 1.5, borderColor: C.line, backgroundColor: C.soft, borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, fontSize: T.body },
+  send: { backgroundColor: C.ink, borderRadius: R.pill, paddingHorizontal: 18, justifyContent: 'center' },
+  sendText: { color: '#fff', fontWeight: '700' },
+  mic: { borderWidth: 1.5, borderColor: C.ink, borderRadius: R.pill, paddingHorizontal: 13, justifyContent: 'center' },
+  micOn: { backgroundColor: C.accent, borderColor: C.accent },
 });

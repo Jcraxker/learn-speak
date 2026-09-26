@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { C } from '../theme';
 
 function fmt(total) {
   const m = Math.floor(total / 60);
@@ -37,7 +38,10 @@ export default function SessionBar({ duracionMin, onTerminar }) {
 
   return (
     <View style={styles.bar}>
-      <Text style={[styles.time, restantes <= 60 && styles.urgent]}>{fmt(restantes)}</Text>
+      <View style={styles.live}>
+        <View style={styles.dot} />
+        <Text style={[styles.time, restantes <= 60 && styles.urgent]}>{fmt(restantes)}</Text>
+      </View>
       <Pressable style={styles.end} onPress={() => { if (!done.current) { done.current = true; onTerminar?.(); } }}>
         <Text style={styles.endText}>Terminar</Text>
       </Pressable>
@@ -46,9 +50,11 @@ export default function SessionBar({ duracionMin, onTerminar }) {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
-  time: { fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  urgent: { color: '#c00' },
-  end: { borderWidth: 1, borderColor: '#c00', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
-  endText: { color: '#c00', fontWeight: '600' },
+  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderColor: C.line, backgroundColor: C.bg },
+  live: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.accent },
+  time: { fontSize: 22, fontWeight: '800', color: C.ink, fontVariant: ['tabular-nums'] },
+  urgent: { color: C.danger },
+  end: { borderWidth: 1.5, borderColor: C.danger, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  endText: { color: C.danger, fontWeight: '700' },
 });
