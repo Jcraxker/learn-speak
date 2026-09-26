@@ -15,7 +15,7 @@ const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const VOICE_BY_LANG = { es: 'Kore', en: 'Puck' };
 const VOICE_DB = -30; // trigger: near-mic voice (hackathon music won't reach it)
 const SILENCE_DB = -40; // silence floor with hysteresis gap
-const MIN_VOICE_MS = 700; // ignore short bursts (claps, beats)
+const MIN_VOICE_MS = 500; // ignore very short bursts, keep single short phrases
 const SILENCE_MS = 1800;
 const MAX_RECORD_MS = 45000;
 
@@ -277,7 +277,7 @@ export async function transcribeAudio(uri) {
         contents: [
           {
             parts: [
-              { text: 'Transcribe solo la voz principal cercana. Ignora musica de fondo, ruido y otras voces. Sin comentarios, solo el texto.' },
+              { text: 'Repeat exactly what the person says, word for word, in the same language they speak. Do not translate. Do not answer. Do not comment. Output only the transcript, nothing else.' },
               { inline_data: { mime_type: 'audio/m4a', data: base64 } },
             ],
           },
