@@ -4,9 +4,9 @@ Mobile app to practice English/Spanish with a conversational AI tutor. Built for
 
 App móvil para practicar inglés/español con un tutor de IA conversacional. Construida para la hackathon **Shipato OpenIA 2** (6 horas totales, ~4 horas de código).
 
-> **⚠️ Status / Estado: INITIAL PHASE — documentation only.** This repository currently contains base documentation, license, gitignore and env example. **No app code exists yet.** No features are implemented so far.
+> **Status / Estado: WORKING MVP in Expo Go + preview APK building.** Session flow (setup → chat → feedback), AI tutor, timer, TTS + mic, RevenueCat paywall (demo mode without store keys).
 >
-> **⚠️ Fase INICIAL — solo documentación.** Este repositorio contiene únicamente documentación base, licencia, gitignore y ejemplo de env. **Aún no existe código de la app.** Ninguna funcionalidad está implementada.
+> **MVP funcional en Expo Go + APK preview en construcción.** Flujo de sesión (setup → chat → feedback), tutor IA, timer, TTS + mic, paywall RevenueCat (modo demo sin keys de tienda).
 
 ## Context / Contexto
 
@@ -23,21 +23,21 @@ Meta: una sesión mobile-first — elegir dirección (EN→ES / ES→EN), nivel,
 | Layer / Capa | Technology / Tecnología |
 |---|---|
 | Mobile | React Native + Expo (plain JS, Expo Go for testing) |
-| AI | Google Gemini 2.5 Flash via API key (free tier), Groq as fallback |
-| Voice out | `expo-speech` (TTS) |
-| Voice in | Text input for MVP, STT only if time allows |
-| Session | Local state + 5/10/15 min timer, no backend server |
+| AI | Google Gemini 3.5-flash-lite via API key (free tier), 3.5-flash fallback |
+| Voice out | `expo-speech` (TTS per AI message) |
+| Voice in | Mic with auto-stop on silence → Gemini transcription, keyboard fallback |
+| Session | Local state + 5/10/15 min timer + AI greeting + AI feedback, no backend server |
+| Monetization | RevenueCat: Pro monthly subscription + 60-min consumable, 1 free session/day |
 
-*Planned stack. Implementation is pending. / Stack previsto. Implementación pendiente.*
+*Stack implemented and running in Expo Go. / Stack implementado y corriendo en Expo Go.*
 
 ## Planned scope / Alcance previsto
 
 * Session setup: direction, level (A1-C1), fixed topics (viajes, música, tech, fútbol), duration (5/10/15 min)
-* Chat with AI tutor that replies in the detected user language, max ~60 words + 1 short correction + 1 follow-up question
-* Visible MM:SS timer that locks input at 0 and shows a short AI feedback summary
-* TTS playback per AI message
-
-*Nothing above is implemented yet. / Nada de lo anterior está implementado aún.*
+* AI greeting on session start + chat with tutor that replies in the detected user language, max ~60 words + 1 short correction + 1 follow-up question
+* Visible MM:SS timer that locks input at 0 and shows an AI feedback summary (3 bullets + score)
+* TTS playback per AI message + mic with silence auto-stop and transcription
+* Monetization: 1 free session/day, Pro subscription and minutes pack via RevenueCat
 
 ## Roadmap (4h coding)
 
@@ -55,9 +55,8 @@ Meta: una sesión mobile-first — elegir dirección (EN→ES / ES→EN), nivel,
 ## Run / Ejecución
 
 ```bash
-# Not working yet — planned commands / Aún no funciona — comandos previstos
 npm install
-npx expo start --tunnel
+npx expo start --lan   # open exp://<laptop-ip>:8081 in Expo Go (same WiFi)
 ```
 
 Requires `EXPO_PUBLIC_GEMINI_KEY` in `.env` (see `.env.example`). Key stays local, never committed.

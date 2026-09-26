@@ -6,6 +6,7 @@ import SessionBar from './src/components/SessionBar';
 import Setup from './src/components/Setup';
 import { C } from './src/theme';
 import { getFeedback, sendMessage } from './src/lib/ai';
+import { canStartFree, markFreeUsed } from './src/lib/freelimit';
 import { initMonetization, isMockMode, isPro } from './src/lib/monetization';
 import { speak, stopSpeak } from './src/lib/voice';
 
@@ -30,21 +31,30 @@ export default function App() {
     })();
   }, []);
 
-  function startSession(cfg) {
-    if (!pro) {
-      pendingStart.current = cfg;
-      setPaywall(true);
+  async function startSession(cfg) {
+    if (pro) {
+      begin(cfg);
       return;
     }
-    begin(cfg);
+    if (await canStartFree()) {
+      await markFreeUsed();
+      begin(cfg);
+      return;
+    }
+    pendingStart.current = cfg;
+    setPaywall(true);
   }
 
-  function begin(cfg) {
+  async function begin(cfg) {
     setConfig(cfg);
     setMensajes([]);
     setFeedback('');
     setBloqueado(false);
     setFase('chat');
+    setPensando(true);
+    const saludo = await sendMessage([], cfg);
+    setMensajes([{ rol: 'ai', texto: saludo }]);
+    setPensando(false);
   }
 
   async function onPaywallClose(plan, res) {
