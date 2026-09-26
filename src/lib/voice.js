@@ -1,21 +1,22 @@
-// Voice layer: TTS out + STT in.
-// TTS priority: Gemini neural voice (24kHz, natural) -> device voice (best
-// available) -> silent. Neural playback via expo-av, works in Expo Go.
-// STT: expo-av record (auto-stop on silence) -> Gemini transcription.
+// Voice layer on expo-audio (Expo Go compatible, SDK 57 maintained).
+// TTS priority: Gemini neural voice (natural, Kore ES / Puck EN) -> best
+// device voice -> silent. STT: record (auto-stop on silence) -> Gemini.
 // Text input always stays as fallback.
 
 import * as Speech from 'expo-speech';
+import {
+  AudioModule,
+  AudioRecorder,
+  RecordingPresets,
+  createAudioPlayer,
+  setAudioModeAsync,
+} from 'expo-audio';
 
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const VOICE_BY_LANG = { es: 'Kore', en: 'Puck' };
-
-let Av = null;
-try {
-  // eslint-disable-next-line global-require
-  Av = require('expo-av');
-} catch (e) {
-  Av = null;
-}
+const SILENCE_DB = -38;
+const SILENCE_MS = 1800;
+const MAX_RECORD_MS = 60000;
 
 let bestVoice = null;
 
@@ -39,37 +40,45 @@ async function pickBestVoice(lang) {
   }
 }
 
+let currentPlayer = null;
+
+function releasePlayer() {
+  if (currentPlayer) {
+    try {
+      currentPlayer.remove();
+    } catch (e) {
+      // noop
+    }
+    currentPlayer = null;
+  }
+}
+
 export async function speak(text, lang) {
-  // 1) Neural voice (Gemini TTS). Falls through on any error.
+  const target = lang === 'es' ? 'es' : 'en';
   try {
-    await speakNeural(text, lang);
+    await speakNeural(text, target);
     return;
   } catch (e) {
-    // continue to device voice
+    // fall through to device voice
   }
-  // 2) Best device voice.
   try {
     await Speech.stop();
-    if (!bestVoice || bestVoice.lang !== lang) {
-      bestVoice = { lang, id: await pickBestVoice(lang) };
+    if (!bestVoice || bestVoice.lang !== target) {
+      bestVoice = { lang: target, id: await pickBestVoice(target) };
     }
     await Speech.speak(text, {
-      language: lang === 'es' ? 'es-ES' : 'en-US',
+      language: target === 'es' ? 'es-ES' : 'en-US',
       voice: bestVoice.id || undefined,
       rate: 0.95,
     });
   } catch (e) {
-    // TTS unavailable on device — silent, text stays visible.
+    // TTS unavailable — silent, text stays visible.
   }
 }
-
-let currentSound = null;
 
 export async function speakNeural(text, lang) {
   const key = process.env.EXPO_PUBLIC_GEMINI_KEY;
   if (!key) throw new Error('no-key');
-  if (!Av) throw new Error('recorder-unavailable');
-  const { Audio } = Av;
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${key}`,
     {
@@ -95,18 +104,10 @@ export async function speakNeural(text, lang) {
   const FileSystem = require('expo-file-system/legacy');
   const uri = `${FileSystem.cacheDirectory}tts-${Date.now()}.wav`;
   await FileSystem.writeAsStringAsync(uri, wavFromPcmB64(b64), { encoding: 'base64' });
-  await stopSpeak();
-  if (currentSound) {
-    try {
-      await currentSound.unloadAsync();
-    } catch (e) {
-      // noop
-    }
-    currentSound = null;
-  }
-  await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
-  const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
-  currentSound = sound;
+  stopSpeak();
+  await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+  currentPlayer = createAudioPlayer(uri);
+  currentPlayer.play();
 }
 
 // Gemini returns raw 16-bit mono PCM @24kHz base64. Wrap in WAV header.
@@ -146,56 +147,59 @@ export function stopSpeak() {
   } catch (e) {
     // noop
   }
-  if (currentSound) {
-    currentSound.unloadAsync().catch(() => {});
-    currentSound = null;
-  }
+  releasePlayer();
 }
 
 export function isRecorderAvailable() {
-  return !!Av;
+  return true; // expo-audio ships inside Expo Go
 }
 
-let recording = null;
+let recorder = null;
 let meterTimer = null;
 
-// Smart record: starts mic and auto-stops after ~1.8s of silence (metering).
-// Pure JS + expo-av, works in Expo Go. Callbacks keep Chat UI live.
-// onLevel(db) -> live meter (-160..0). onAutoStop(uri) -> silence detected.
-export async function startSmartRecord({ onLevel, onAutoStop }) {
-  if (!Av) throw new Error('recorder-unavailable');
-  const { Audio } = Av;
+function clearMeter() {
+  if (meterTimer) {
+    clearInterval(meterTimer);
+    meterTimer = null;
+  }
+}
+
+// Smart record: auto-stops after SILENCE_MS of silence (metering) or
+// MAX_RECORD_MS cap. onAutoStop(uri) fires on silence; manual stop via
+// stopSmartRecord(). Works in Expo Go.
+export async function startSmartRecord({ onAutoStop }) {
   stopSpeak(); // cut professor audio so mic doesn't capture it
-  const perm = await Audio.requestPermissionsAsync();
+  const perm = await AudioModule.requestRecordingPermissionsAsync();
   if (!perm.granted) throw new Error('mic-denied');
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-  });
-  recording = new Audio.Recording();
-  await recording.prepareToRecordAsync({
-    ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-    isMeteringEnabled: true,
-  });
-  await recording.startAsync();
+  await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+  recorder = new AudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  await recorder.prepareToRecordAsync();
+  recorder.record();
 
   let quietMs = 0;
   let heardVoice = false;
+  let elapsed = 0;
   meterTimer = setInterval(async () => {
     try {
-      const st = await recording.getStatusAsync();
-      if (!st.canRecord) return;
-      const db = st.metering ?? -160;
-      onLevel?.(db);
-      if (db > -38) {
-        heardVoice = true;
-        quietMs = 0;
-      } else if (heardVoice) {
-        quietMs += 300;
-        if (quietMs >= 1800) {
-          const uri = await stopSmartRecord();
-          onAutoStop?.(uri);
+      const st = recorder.getStatus();
+      const db = st?.metering;
+      elapsed += 300;
+      if (typeof db === 'number') {
+        if (db > SILENCE_DB) {
+          heardVoice = true;
+          quietMs = 0;
+        } else if (heardVoice) {
+          quietMs += 300;
+          if (quietMs >= SILENCE_MS) {
+            const uri = await stopSmartRecord();
+            onAutoStop?.(uri);
+            return;
+          }
         }
+      }
+      if (elapsed >= MAX_RECORD_MS) {
+        const uri = await stopSmartRecord();
+        onAutoStop?.(uri);
       }
     } catch (e) {
       // metering hiccup — ignore, keep recording
@@ -205,44 +209,25 @@ export async function startSmartRecord({ onLevel, onAutoStop }) {
 }
 
 export async function stopSmartRecord() {
-  if (meterTimer) {
-    clearInterval(meterTimer);
-    meterTimer = null;
-  }
-  if (!recording) return null;
+  clearMeter();
+  if (!recorder) return null;
   try {
-    await recording.stopAndUnloadAsync();
+    await recorder.stop();
   } catch (e) {
     // already stopped
   }
-  const uri = recording.getURI();
-  recording = null;
+  const uri = recorder.uri;
+  try {
+    recorder.release?.();
+  } catch (e) {
+    // noop
+  }
+  recorder = null;
   return uri;
 }
 
 export function isSmartRecording() {
-  return !!recording;
-}
-
-export async function toggleRecord() {
-  if (!Av) throw new Error('recorder-unavailable');
-  const { Audio } = Av;
-  if (recording) {
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    recording = null;
-    return { done: true, uri };
-  }
-  const perm = await Audio.requestPermissionsAsync();
-  if (!perm.granted) throw new Error('mic-denied');
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-  });
-  recording = new Audio.Recording();
-  await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-  await recording.startAsync();
-  return { done: false, recording: true };
+  return !!recorder;
 }
 
 // Sends recorded audio to Gemini for transcription. Returns text or throws.
