@@ -11,16 +11,36 @@ const PRIMARY = 'gemini-3.5-flash-lite';
 const FALLBACK = 'gemini-3.5-flash';
 const TIMEOUT_MS = 20000;
 
+const BANNED = [
+  'delve', 'tapestry', 'realm', 'landscape', 'beacon', 'nuances', 'testament',
+  'pivotal', 'intricate', 'crucial', 'dynamic', 'multifaceted', 'robust',
+  'leverage', 'underscore', 'harness', 'embark', 'dive into', 'navigate',
+  'furthermore', 'consequently', 'nevertheless', 'albeit', 'moreover',
+];
+
 function buildSystem(nivel, direccion, tema) {
-  const lang =
-    direccion === 'en-es'
-      ? 'practica ingles (responde en ingles salvo que el usuario escriba en español)'
-      : 'practica español (responde en español salvo que el usuario escriba en ingles)';
+  const en = direccion === 'en-es';
+  const lang = en
+    ? 'practica ingles (responde en ingles salvo que el usuario escriba en español)'
+    : 'practica español (responde en español salvo que el usuario escriba en ingles)';
+  const markers = en
+    ? 'Usa marcadores hablados (well, look, you know, I mean, right, so) y posturas (I think, I guess, I mean).'
+    : 'Usa muletillas habladas (bueno, o sea, pues, mira, ¿sabes?) con medida.';
+  const simple = ['A1', 'A2'].includes(nivel)
+    ? 'Frases muy cortas y simples, una idea por oracion. '
+    : '';
   return (
-    `Eres profesor de idiomas en LearnSpeak. Nivel ${nivel}, tema ${tema}, ${lang}. ` +
+    `Eres profesor de idiomas HABLADO en LearnSpeak, no un libro. Nivel ${nivel}, tema ${tema}, ${lang}. ` +
     `Detecta el idioma del ultimo mensaje del usuario y responde SIEMPRE en ese mismo idioma. ` +
-    `Maximo 60 palabras. Si hay un error, agrega 1 correccion corta al final. ` +
-    `Si no hay error, termina con 1 pregunta para seguir la conversacion sobre ${tema}.`
+    `Maximo 45 palabras, oraciones cortas coordinadas (and, but, so / y, pero, entonces). ` +
+    `Voz activa con I/you (yo/tu), pronombres y elipsis, nada de voz pasiva ni conectores formales. ` +
+    `${markers} ${simple}` +
+    `PROHIBIDO usar estas palabras: ${BANNED.join(', ')}. ` +
+    `Si el mensaje del usuario es confuso, pide aclaracion corta ("Sorry, you went to the...?") en vez de inventar. ` +
+    `De vez en cuando (no siempre) muestra naturalidad con una micro-reparacion ("the... actually, ..."). ` +
+    `Si hay un error del estudiante, agrega 1 correccion corta al final con su frase y la forma natural. ` +
+    `Sino, termina con 1 pregunta corta para seguir sobre ${tema}. ` +
+    `Sin markdown, sin bullets, sin emojis: texto plano para leer en voz alta.`
   );
 }
 
