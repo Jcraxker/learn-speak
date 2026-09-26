@@ -81,7 +81,8 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
       buzz('ok');
       if (t) onSend(t);
     } catch (e) {
-      setSttMsg('No te escuche bien, toca el orbe e intenta de nuevo.');
+      console.log('[deliver] transcription error:', e?.message || e);
+      setSttMsg('No te escuché bien, toca el orbe e intenta de nuevo.');
     }
   }
 
@@ -96,13 +97,13 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
     // Manual stop while recording.
     if (grabando) {
       buzz('tap');
+      setGrabando(false);
       try {
         const uri = await stopSmartRecord();
-        setGrabando(false);
         await deliver(uri);
       } catch (e) {
-        setGrabando(false);
-        setSttMsg('No te escuche bien, toca el orbe e intenta de nuevo.');
+        console.log('[mic] manual stop error:', e?.message || e);
+        setSttMsg('No te escuché bien, toca el orbe e intenta de nuevo.');
       }
       return;
     }

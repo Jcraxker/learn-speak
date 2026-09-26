@@ -10,14 +10,18 @@ WebBrowser.maybeCompleteAuthSession();
 // registrados en Cloud Console). Siempre hay modo invitado de respaldo.
 const ANDROID_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 
+// Placeholder ID prevents useAuthRequest from throwing when the real ID
+// is missing. The login() guard still blocks actual auth attempts.
+const SAFE_ID = ANDROID_ID || 'placeholder.apps.googleusercontent.com';
+
 export function useGoogleUser() {
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: ANDROID_ID,
-    expoClientId: ANDROID_ID,
+    androidClientId: SAFE_ID,
+    expoClientId: SAFE_ID,
   });
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export function useGoogleUser() {
   async function login() {
     setError('');
     if (!ANDROID_ID) {
-      setError('Falta configurar el login (ID no cargado).');
+      setError('Google login no disponible. Usa modo invitado.');
       return;
     }
     setBusy(true);

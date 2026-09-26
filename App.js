@@ -102,9 +102,15 @@ export default function App() {
     stopSpeak();
     setBloqueado(true);
     setFase('score');
-    const fb = cleanText(await getFeedback(mensajes, { nivel: config.nivel, direccion: config.direccion }));
+    const fb = cleanText(
+      await getFeedback(mensajes, {
+        nivel: config?.nivel,
+        direccion: config?.direccion,
+        tema: config?.tema,
+      })
+    );
     setFeedback(fb);
-    await logSession(config.duracionMin);
+    await logSession(config?.duracionMin || 5);
     await logScore(parseScore(fb));
   }
 
@@ -170,10 +176,20 @@ export default function App() {
             </View>
             <View style={styles.heroT}>
               <Text style={styles.eyebrow2}>CONVERSATION SCORE</Text>
-              <Text style={styles.heroH}>{nota != null && nota >= 70 ? 'Great conversation' : 'Good practice'}</Text>
+              <Text style={styles.heroH}>
+                {nota == null
+                  ? 'Evaluando sesión…'
+                  : nota >= 85
+                  ? '¡Excelente conversación!'
+                  : nota >= 70
+                  ? '¡Gran conversación!'
+                  : nota >= 50
+                  ? '¡Buena práctica!'
+                  : 'Sigue practicando'}
+              </Text>
             </View>
           </View>
-          <Text style={styles.feedback}>{feedback || 'Generando resumen...'}</Text>
+          <Text style={styles.feedback}>{feedback || 'Analizando tu desempeño y calculando puntaje...'}</Text>
           {!!feedback && (
             <Pressable style={styles.listen} onPress={() => speak(feedback, config.direccion === 'en-es' ? 'en' : 'es')}>
               <Text style={styles.listenT}>Escuchar resumen</Text>
