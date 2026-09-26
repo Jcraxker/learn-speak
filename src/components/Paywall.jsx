@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../theme';
 import { buyPackage, getOfferings, isMockMode, restore } from '../lib/monetization';
 
@@ -8,10 +9,10 @@ import { buyPackage, getOfferings, isMockMode, restore } from '../lib/monetizati
 // Works in mock (Expo Go demo, no charge) and live (dev build/APK + store keys).
 // Props: visible, onClose(plan) where plan is 'pro' | 'minutes' | null.
 const BENEFITS = [
-  { icon: '∞', title: 'Sesiones ilimitadas', sub: 'Practica 5, 10 o 15 min sin tope diario' },
-  { icon: '◉', title: 'Todos los temas y niveles', sub: 'De A1 a C1, 4 temas y los que vengan' },
-  { icon: '✓', title: 'Correcciones + nota', sub: 'Feedback con bullets y puntaje 0-100' },
-  { icon: '♪', title: 'Voz completa', sub: 'Escucha al profesor y habla con el micrófono' },
+  { icon: 'infinite', title: 'Sesiones ilimitadas', sub: 'Practica 5, 10 o 15 min sin tope diario' },
+  { icon: 'apps', title: 'Todos los temas y niveles', sub: 'De A1 a C1, 4 temas y los que vengan' },
+  { icon: 'checkmark-circle', title: 'Correcciones + nota', sub: 'Feedback con bullets y puntaje 0-100' },
+  { icon: 'musical-notes', title: 'Voz completa', sub: 'Escucha al profesor y habla con el micrófono' },
 ];
 
 export default function Paywall({ visible, onClose }) {
@@ -60,7 +61,9 @@ export default function Paywall({ visible, onClose }) {
             <Text style={styles.title}>Habla sin límites</Text>
             {BENEFITS.map((b) => (
               <View key={b.title} style={styles.benefit}>
-                <Text style={styles.icon}>{b.icon}</Text>
+                <View style={styles.bicon}>
+                  <Ionicons name={b.icon} size={18} color={C.navy} />
+                </View>
                 <View style={styles.btext}>
                   <Text style={styles.btitle}>{b.title}</Text>
                   <Text style={styles.bsub}>{b.sub}</Text>
@@ -115,7 +118,7 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 12, fontWeight: '800', letterSpacing: 2, color: C.surface },
   title: { fontSize: 26, fontWeight: '800', color: C.ink, marginBottom: 4 },
   benefit: { flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 4 },
-  icon: { width: 36, height: 36, textAlign: 'center', textAlignVertical: 'center', borderRadius: 18, backgroundColor: C.primary, fontWeight: '800', color: C.ink, fontSize: 16 },
+  bicon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   btext: { flex: 1 },
   btitle: { fontWeight: '700', color: C.ink, fontSize: T.body },
   bsub: { color: C.muted, fontSize: T.small },

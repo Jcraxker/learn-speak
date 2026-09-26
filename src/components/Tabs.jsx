@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { C, T } from '../theme';
 import { getStats } from '../lib/stats';
 import { canStartFree } from '../lib/freelimit';
 
 // Tabs: home | practice | progress | profile
+const TAB_ICON = { home: 'home', practice: 'bulb', progress: 'stats-chart', profile: 'person' };
 export default function Tabs({ tab, setTab }) {
   const items = [
     ['home', 'Home'],
@@ -16,7 +18,7 @@ export default function Tabs({ tab, setTab }) {
     <View style={styles.nav}>
       {items.map(([id, label]) => (
         <Pressable key={id} style={styles.btn} onPress={() => setTab(id)}>
-          <Text style={[styles.dot, tab === id && styles.dotOn]}>●</Text>
+          <Ionicons name={TAB_ICON[id]} size={22} color={tab === id ? C.navy : '#b9c4cd'} />
           <Text style={[styles.label, tab === id && styles.labelOn]}>{label}</Text>
         </Pressable>
       ))}
@@ -27,8 +29,6 @@ export default function Tabs({ tab, setTab }) {
 const styles = StyleSheet.create({
   nav: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10, paddingBottom: 18, backgroundColor: '#fff', borderTopWidth: 1, borderColor: C.line },
   btn: { width: 64, alignItems: 'center', gap: 3 },
-  dot: { fontSize: 16, color: '#b9c4cd' },
-  dotOn: { color: C.navy },
   label: { fontSize: 10, color: C.muted },
   labelOn: { color: C.navy, fontWeight: '700' },
 });
@@ -62,7 +62,8 @@ export function Home({ user, goPractice, openPaywall, pro }) {
           <Text style={h.heroT}>Ready to{'\n'}practice?</Text>
           <Text style={h.heroP}>Have a natural conversation with your AI tutor.</Text>
           <Pressable style={h.start} onPress={() => goPractice()}>
-            <Text style={h.startT}>Start speaking →</Text>
+            <Text style={h.startT}>Start speaking </Text>
+            <Ionicons name="arrow-forward" size={14} color={C.navy} />
           </Pressable>
         </View>
         <View style={h.orb}>
@@ -111,7 +112,7 @@ const h = StyleSheet.create({
   ready: { fontSize: 9, letterSpacing: 1, color: '#a9d7d2', fontWeight: '600' },
   heroT: { fontSize: 30, fontWeight: '800', color: '#fff', lineHeight: 32 },
   heroP: { fontSize: 12, color: '#d6e5ee', lineHeight: 17 },
-  start: { backgroundColor: '#fff', borderRadius: 23, paddingVertical: 12, paddingHorizontal: 16, alignSelf: 'flex-start', marginTop: 6 },
+  start: { backgroundColor: '#fff', borderRadius: 23, paddingVertical: 12, paddingHorizontal: 16, alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center' },
   startT: { color: C.navy, fontWeight: '700', fontSize: 12 },
   orb: { width: 90, height: 90, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
   orbIn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#2a8c87', borderWidth: 3, borderColor: '#71c8bd' },
