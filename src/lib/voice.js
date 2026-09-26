@@ -1,8 +1,13 @@
-// Voice layer: TTS out (expo-speech) + STT in (expo-av record -> Gemini).
-// TTS works everywhere including Expo Go. STT needs mic permission;
-// on any failure the text input stays as fallback, STT never blocks.
+// Voice layer: TTS out + STT in.
+// TTS priority: Gemini neural voice (24kHz, natural) -> device voice (best
+// available) -> silent. Neural playback via expo-av, works in Expo Go.
+// STT: expo-av record (auto-stop on silence) -> Gemini transcription.
+// Text input always stays as fallback.
 
 import * as Speech from 'expo-speech';
+
+const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+const VOICE_BY_LANG = { es: 'Kore', en: 'Puck' };
 
 let Av = null;
 try {
@@ -12,11 +17,45 @@ try {
   Av = null;
 }
 
-export function speak(text, lang) {
+let bestVoice = null;
+
+async function pickBestVoice(lang) {
   try {
-    Speech.stop();
-    Speech.speak(text, {
+    const voices = await Speech.getAvailableVoicesAsync();
+    const prefix = lang === 'es' ? 'es' : 'en';
+    const pool = voices.filter((v) => (v.language || '').toLowerCase().startsWith(prefix));
+    if (!pool.length) return null;
+    const scored = pool.map((v) => ({
+      v,
+      score:
+        (v.network ? 2 : 0) +
+        (/enhanced|premium|neural|natural/i.test(`${v.name} ${v.quality}`) ? 2 : 0) +
+        (/google/i.test(v.name || '') ? 1 : 0),
+    }));
+    scored.sort((a, b) => b.score - a.score);
+    return scored[0].v.identifier;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function speak(text, lang) {
+  // 1) Neural voice (Gemini TTS). Falls through on any error.
+  try {
+    await speakNeural(text, lang);
+    return;
+  } catch (e) {
+    // continue to device voice
+  }
+  // 2) Best device voice.
+  try {
+    await Speech.stop();
+    if (!bestVoice || bestVoice.lang !== lang) {
+      bestVoice = { lang, id: await pickBestVoice(lang) };
+    }
+    await Speech.speak(text, {
       language: lang === 'es' ? 'es-ES' : 'en-US',
+      voice: bestVoice.id || undefined,
       rate: 0.95,
     });
   } catch (e) {
@@ -24,11 +63,92 @@ export function speak(text, lang) {
   }
 }
 
+let currentSound = null;
+
+export async function speakNeural(text, lang) {
+  const key = process.env.EXPO_PUBLIC_GEMINI_KEY;
+  if (!key) throw new Error('no-key');
+  if (!Av) throw new Error('recorder-unavailable');
+  const { Audio } = Av;
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: text.slice(0, 900) }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: VOICE_BY_LANG[lang] || 'Kore' },
+            },
+          },
+        },
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`http-${res.status}`);
+  const data = await res.json();
+  const b64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!b64) throw new Error('empty-audio');
+  const FileSystem = require('expo-file-system/legacy');
+  const uri = `${FileSystem.cacheDirectory}tts-${Date.now()}.wav`;
+  await FileSystem.writeAsStringAsync(uri, wavFromPcmB64(b64), { encoding: 'base64' });
+  await stopSpeak();
+  if (currentSound) {
+    try {
+      await currentSound.unloadAsync();
+    } catch (e) {
+      // noop
+    }
+    currentSound = null;
+  }
+  await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+  const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+  currentSound = sound;
+}
+
+// Gemini returns raw 16-bit mono PCM @24kHz base64. Wrap in WAV header.
+function wavFromPcmB64(b64) {
+  const bin = atob(b64);
+  const n = bin.length;
+  const buf = new Uint8Array(44 + n);
+  const view = new DataView(buf.buffer);
+  const wstr = (o, s) => {
+    for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i));
+  };
+  wstr(0, 'RIFF');
+  view.setUint32(4, 36 + n, true);
+  wstr(8, 'WAVE');
+  wstr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 24000, true);
+  view.setUint32(28, 48000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  wstr(36, 'data');
+  view.setUint32(40, n, true);
+  for (let i = 0; i < n; i++) buf[44 + i] = bin.charCodeAt(i);
+  let out = '';
+  const CH = 0x8000;
+  for (let i = 0; i < buf.length; i += CH) {
+    out += String.fromCharCode.apply(null, buf.subarray(i, i + CH));
+  }
+  return btoa(out);
+}
+
 export function stopSpeak() {
   try {
     Speech.stop();
   } catch (e) {
     // noop
+  }
+  if (currentSound) {
+    currentSound.unloadAsync().catch(() => {});
+    currentSound = null;
   }
 }
 
@@ -45,6 +165,7 @@ let meterTimer = null;
 export async function startSmartRecord({ onLevel, onAutoStop }) {
   if (!Av) throw new Error('recorder-unavailable');
   const { Audio } = Av;
+  stopSpeak(); // cut professor audio so mic doesn't capture it
   const perm = await Audio.requestPermissionsAsync();
   if (!perm.granted) throw new Error('mic-denied');
   await Audio.setAudioModeAsync({
