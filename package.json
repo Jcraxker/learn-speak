@@ -13,7 +13,9 @@
     "expo-av": "~15.0.2",
     "expo-speech": "~57.0.3",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-native": "0.86.3",
+    "react-native-purchases": "^10.10.2",
+    "react-native-purchases-ui": "^10.10.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2"
