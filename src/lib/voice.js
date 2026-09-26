@@ -16,7 +16,7 @@ const VOICE_BY_LANG = { es: 'Kore', en: 'Puck' };
 const VOICE_DB = -30; // trigger: near-mic voice (hackathon music won't reach it)
 const SILENCE_DB = -40; // silence floor with hysteresis gap
 const MIN_VOICE_MS = 500; // ignore very short bursts, keep single short phrases
-const SILENCE_MS = 1800;
+const SILENCE_MS = 1500; // snappy send without cutting normal pauses
 const MAX_RECORD_MS = 45000;
 
 let bestVoice = null;
