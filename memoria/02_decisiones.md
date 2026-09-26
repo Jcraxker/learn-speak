@@ -19,5 +19,10 @@ Detecta idioma del último mensaje y responde en ese idioma. Máx. 60 palabras +
 ## D5 — Timer bloqueante + feedback final (2026-09-26)
 `setInterval` cada 1s, a 0 bloquea input y pide resumen a Gemini (3 bullets + nota 0-100). Es el criterio visible de "sesión cumplida" para el jurado.
 
-## D6 — Commits en inglés, docs bilingües, sin firmas IA (2026-09-26)
+## D7 — Voz doble: TTS obligatorio + STT opcional (2026-09-26)
+**Decisión:** Ambas integradas. TTS (`expo-speech`) como salida principal, STT (micrófono → texto) como entrada opcional, texto siempre disponible como fallback.
+**Por qué:** Equipo con IA puede paralelizar: uno asegura TTS (30 min, riesgo cero), otro ataca STT sin bloquear demo. Si STT falla en vivo, la demo sigue con texto + TTS.
+**Orden:** TTS primero (H2.5-H3), STT después (H3-H3.5), nunca al revés.
+
+## D8 — Commits en inglés, docs bilingües, sin firmas IA (2026-09-26)
 Heredado de Puente. Email `Jcraxker@users.noreply.github.com` (el normal rebota por GH007). Repo público desde creación limpia (sin rastro de MarioEscobar64).
