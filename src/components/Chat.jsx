@@ -82,6 +82,8 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
     } catch (e) {
       setSttMsg('No te escuche bien, toca el orbe e intenta de nuevo.');
     }
+  }
+
   async function microfono() {
     if (bloqueado) return;
     if (hablando && !grabando) {
