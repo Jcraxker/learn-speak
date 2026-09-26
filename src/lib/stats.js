@@ -54,10 +54,31 @@ export async function getStats() {
 }
 
 export function parseScore(feedback) {
-  const m = String(feedback || '').match(/(\d{1,3})\s*\/\s*100/);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return n >= 0 && n <= 100 ? n : null;
+  if (!feedback) return null;
+  const str = String(feedback);
+
+  // Pattern 1: Explicit score out of 100 (e.g., "Puntaje: 85/100", "85/100", "85 / 100", "85 de 100")
+  const m1 = str.match(/(?:puntaje|score|nota|calificaci[oó]n)?[:\s]*(\d{1,3})\s*(?:\/|\s*de\s*|\s*sobre\s*)\s*100/i);
+  if (m1) {
+    const n = Number(m1[1]);
+    if (n >= 0 && n <= 100) return n;
+  }
+
+  // Pattern 2: "Puntaje: 85" or "Nota: 85" or "Score: 85"
+  const m2 = str.match(/(?:puntaje|score|nota|calificaci[oó]n)[:\s]+(\d{1,3})\b/i);
+  if (m2) {
+    const n = Number(m2[1]);
+    if (n >= 0 && n <= 100) return n;
+  }
+
+  // Pattern 3: Simple standalone "85/100"
+  const m3 = str.match(/\b(\d{1,3})\s*\/\s*100\b/);
+  if (m3) {
+    const n = Number(m3[1]);
+    if (n >= 0 && n <= 100) return n;
+  }
+
+  return null;
 }
 
 export async function logScore(n) {
