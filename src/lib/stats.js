@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SESSIONS = 'learnspeak.stat.sessions';
 const MINUTES = 'learnspeak.stat.minutes';
 const LOG = 'learnspeak.stat.log'; // [{day:'2026-09-26', min:5}]
+const SCORES = 'learnspeak.stat.scores'; // [82, 91]
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -40,11 +41,37 @@ export async function logSession(min) {
 export async function getStats() {
   const [sessions, minutes] = [await num(SESSIONS), await num(MINUTES)];
   let log = [];
+  let scores = [];
   try {
     log = JSON.parse((await AsyncStorage.getItem(LOG)) || '[]');
+    scores = JSON.parse((await AsyncStorage.getItem(SCORES)) || '[]');
   } catch (e) {
     log = [];
   }
   const max = Math.max(1, ...log.map((d) => d.min));
-  return { sessions, minutes, log, max };
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  return { sessions, minutes, log, max, scores, avg };
+}
+
+export function parseScore(feedback) {
+  const m = String(feedback || '').match(/(\d{1,3})\s*\/\s*100/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n >= 0 && n <= 100 ? n : null;
+}
+
+export async function logScore(n) {
+  if (n == null) return;
+  try {
+    let scores = [];
+    try {
+      scores = JSON.parse((await AsyncStorage.getItem(SCORES)) || '[]');
+    } catch (e) {
+      scores = [];
+    }
+    scores.push(n);
+    await AsyncStorage.setItem(SCORES, JSON.stringify(scores.slice(-20)));
+  } catch (e) {
+    // noop
+  }
 }
