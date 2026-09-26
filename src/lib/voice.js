@@ -57,9 +57,10 @@ export async function speak(text, lang) {
   const target = lang === 'es' ? 'es' : 'en';
   try {
     await speakNeural(text, target);
+    console.log('[tts] neural ok', target);
     return;
   } catch (e) {
-    // fall through to device voice
+    console.log('[tts] neural fail:', String(e?.message || e).slice(0, 160));
   }
   try {
     await Speech.stop();
@@ -71,8 +72,9 @@ export async function speak(text, lang) {
       voice: bestVoice.id || undefined,
       rate: 0.95,
     });
+    console.log('[tts] device voice:', bestVoice.id);
   } catch (e) {
-    // TTS unavailable — silent, text stays visible.
+    console.log('[tts] device fail:', String(e?.message || e).slice(0, 160));
   }
 }
 
@@ -169,7 +171,9 @@ function clearMeter() {
 // stopSmartRecord(). Works in Expo Go.
 export async function startSmartRecord({ onAutoStop }) {
   stopSpeak(); // cut professor audio so mic doesn't capture it
+  console.log('[mic] requesting permission');
   const perm = await AudioModule.requestRecordingPermissionsAsync();
+  console.log('[mic] permission granted:', perm.granted);
   if (!perm.granted) throw new Error('mic-denied');
   await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
   recorder = new AudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
