@@ -8,6 +8,7 @@ import { C } from './src/theme';
 import { getFeedback, sendMessage } from './src/lib/ai';
 import { canStartFree, markFreeUsed } from './src/lib/freelimit';
 import { initMonetization, isMockMode, isPro } from './src/lib/monetization';
+import { cleanText } from './src/lib/text';
 import { speak, stopSpeak } from './src/lib/voice';
 
 // Flow: setup -> chat (timer) -> fin (feedback). Free: paywall gate, Pro skips it.
@@ -52,9 +53,10 @@ export default function App() {
     setBloqueado(false);
     setFase('chat');
     setPensando(true);
-    const saludo = await sendMessage([], cfg);
+    const saludo = cleanText(await sendMessage([], cfg));
     setMensajes([{ rol: 'ai', texto: saludo }]);
     setPensando(false);
+    speak(saludo, cfg.direccion === 'en-es' ? 'en' : 'es');
   }
 
   async function onPaywallClose(plan, res) {
@@ -73,16 +75,17 @@ export default function App() {
     const nuevos = [...mensajes, { rol: 'user', texto }];
     setMensajes(nuevos);
     setPensando(true);
-    const reply = await sendMessage(nuevos, config);
+    const reply = cleanText(await sendMessage(nuevos, config));
     setMensajes([...nuevos, { rol: 'ai', texto: reply }]);
     setPensando(false);
+    speak(reply, config.direccion === 'en-es' ? 'en' : 'es');
   }
 
   async function onTerminar() {
     stopSpeak();
     setBloqueado(true);
     setFase('fin');
-    const fb = await getFeedback(mensajes, { nivel: config.nivel, direccion: config.direccion });
+    const fb = cleanText(await getFeedback(mensajes, { nivel: config.nivel, direccion: config.direccion }));
     setFeedback(fb);
   }
 
