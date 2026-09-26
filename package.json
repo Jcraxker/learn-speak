@@ -1,0 +1,22 @@
+{
+  "name": "learnspeak",
+  "version": "1.0.0",
+  "main": "App.js",
+  "scripts": {
+    "start": "expo start",
+    "start:tunnel": "expo start --tunnel",
+    "android": "expo start --android",
+    "build:apk": "eas build -p android --profile preview"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-speech": "~13.0.1",
+    "expo-av": "~15.0.2",
+    "react": "18.3.1",
+    "react-native": "0.76.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2"
+  },
+  "private": true
+}
