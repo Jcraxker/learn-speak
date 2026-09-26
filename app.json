@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "LearnSpeak",
+    "slug": "learn-speak",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "learnspeak",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.learnspeak.app",
+      "versionCode": 1,
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow LearnSpeak to use the microphone for pronunciation practice."
+        }
+      ]
+    ]
+  }
+}
