@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Chat from './src/components/Chat';
+import Login from './src/components/Login';
 import Paywall from './src/components/Paywall';
 import SessionBar from './src/components/SessionBar';
 import Setup from './src/components/Setup';
 import { C } from './src/theme';
 import { getFeedback, sendMessage } from './src/lib/ai';
 import { canStartFree, markFreeUsed } from './src/lib/freelimit';
+import { useGoogleUser } from './src/lib/googleauth';
 import { initMonetization, isMockMode, isPro } from './src/lib/monetization';
 import { cleanText } from './src/lib/text';
 import { speak, stopSpeak } from './src/lib/voice';
 
-// Flow: setup -> chat (timer) -> fin (feedback). Free: paywall gate, Pro skips it.
+// Flow: login -> setup -> chat (timer) -> fin (feedback). Free: paywall gate, Pro skips it.
 export default function App() {
-  const [fase, setFase] = useState('setup');
+  const [fase, setFase] = useState('login');
   const [config, setConfig] = useState(null);
   const [mensajes, setMensajes] = useState([]);
   const [bloqueado, setBloqueado] = useState(false);
@@ -23,6 +25,7 @@ export default function App() {
   const [paywall, setPaywall] = useState(false);
   const [planChecked, setPlanChecked] = useState(false);
   const pendingStart = useRef(null);
+  const g = useGoogleUser();
 
   useEffect(() => {
     (async () => {
@@ -96,10 +99,23 @@ export default function App() {
     setFeedback('');
   }
 
+  useEffect(() => {
+    if (g.user && fase === 'login') setFase('setup');
+  }, [g.user]);
+
   if (!planChecked) {
     return (
       <SafeAreaView style={styles.center}>
         <Text>LearnSpeak...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (fase === 'login') {
+    return (
+      <SafeAreaView style={styles.full}>
+        <StatusBar />
+        <Login busy={g.busy} error={g.error} canLogin={!!g.request} onLogin={g.login} onGuest={g.guest} />
       </SafeAreaView>
     );
   }
@@ -111,7 +127,7 @@ export default function App() {
         {!pro && (
           <Pressable style={styles.pro} onPress={() => setPaywall(true)}>
             <Text style={styles.proText}>
-              Free (1 sesion/dia){isMockMode() ? ' · demo' : ''} — Ver Pro
+              {g.user?.guest ? 'Invitado' : g.user?.name || 'Free'} · 1 sesion/dia{isMockMode() ? ' · demo' : ''} — Ver Pro
             </Text>
           </Pressable>
         )}
