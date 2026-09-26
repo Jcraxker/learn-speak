@@ -75,6 +75,7 @@ export default function App() {
   }
 
   async function onSend(texto) {
+    if (pensando || bloqueado) return;
     const nuevos = [...mensajes, { rol: 'user', texto }];
     setMensajes(nuevos);
     setPensando(true);
@@ -165,6 +166,7 @@ export default function App() {
         mensajes={mensajes}
         onSend={onSend}
         bloqueado={bloqueado}
+        ocupado={pensando}
         lang={config.direccion === 'en-es' ? 'en' : 'es'}
       />
       {pensando && <Text style={styles.typing}>Profesor escribiendo...</Text>}
