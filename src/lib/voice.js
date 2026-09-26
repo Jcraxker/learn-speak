@@ -158,6 +158,19 @@ export function stopSpeak() {
   releasePlayer();
 }
 
+export async function isSpeaking() {
+  try {
+    if (currentPlayer) return !!currentPlayer.playing;
+  } catch (e) {
+    // noop
+  }
+  try {
+    return await Speech.isSpeakingAsync();
+  } catch (e) {
+    return false;
+  }
+}
+
 export function isRecorderAvailable() {
   return true; // expo-audio ships inside Expo Go
 }

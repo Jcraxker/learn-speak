@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { C, R, T } from '../theme';
-import { isRecorderAvailable, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
+import { isSpeaking, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
+import VoiceOrb from './VoiceOrb';
 
 // Props: mensajes [{rol, texto}], onSend(texto), bloqueado, lang ('es'|'en' for TTS)
 // Texto siempre disponible; microfono opcional con fallback a teclado.
 export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voiceMode = true, thinking }) {
   const [texto, setTexto] = useState('');
   const [grabando, setGrabando] = useState(false);
+  const [hablando, setHablando] = useState(false);
   const [seg, setSeg] = useState(0);
   const [sttMsg, setSttMsg] = useState('');
   const list = useRef(null);
@@ -21,6 +23,15 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
     return () => clearInterval(id);
   }, [grabando]);
 
+  useEffect(() => {
+    const id = setInterval(async () => {
+      setHablando(await isSpeaking());
+    }, 700);
+    return () => clearInterval(id);
+  }, []);
+
+  const orbState = grabando ? 'listening' : ocupado ? 'thinking' : hablando ? 'speaking' : 'idle';
+
   function enviar() {
     const t = texto.trim();
     if (!t || bloqueado || ocupado) return;
@@ -28,8 +39,17 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
     onSend(t);
   }
 
+  const orbLabel =
+    orbState === 'listening' ? 'Toca para enviar · se envía solo al callar'
+    : orbState === 'thinking' ? 'Thinking about that…'
+    : orbState === 'speaking' ? 'Your tutor is speaking — toca el orbe para callarlo'
+    : 'Toca el orbe y habla';
   async function microfono() {
     if (bloqueado) return;
+    if (hablando && !grabando) {
+      stopSpeak(); // interrumpir al profesor (barge-in)
+      return;
+    }
     setSttMsg('');
     // Manual stop while recording.
     if (grabando) {
@@ -103,12 +123,11 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
           </View>
         )}
       />
+      <Text style={styles.orbHint}>{orbLabel}</Text>
       {!!sttMsg && <Text style={styles.stt}>{grabando ? `● REC ${seg}s — ${sttMsg}` : sttMsg}</Text>}
       <View style={styles.row}>
         {voiceMode && (
-          <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
-            <Text>{grabando ? '■' : 'Mic'}</Text>
-          </Pressable>
+          <VoiceOrb state={orbState} seconds={seg} onPress={microfono} disabled={bloqueado} />
         )}
         <TextInput
           style={styles.input}
@@ -140,6 +159,7 @@ const styles = StyleSheet.create({
   listen: { marginTop: 6 },
   listenText: { fontSize: 12, fontWeight: '700', color: C.surface },
   stt: { fontSize: 12, fontStyle: 'italic', color: C.muted, paddingHorizontal: 12 },
+  orbHint: { fontSize: 11, color: C.muted, textAlign: 'center', paddingTop: 2 },
   row: { flexDirection: 'row', padding: 10, gap: 8, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg },
   input: { flex: 1, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, fontSize: T.body, color: C.ink },
   send: { backgroundColor: C.ink, borderRadius: R.pill, paddingHorizontal: 18, justifyContent: 'center' },
