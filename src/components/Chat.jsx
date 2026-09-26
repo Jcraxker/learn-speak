@@ -5,7 +5,7 @@ import { isRecorderAvailable, speak, stopSpeak, startSmartRecord, stopSmartRecor
 
 // Props: mensajes [{rol, texto}], onSend(texto), bloqueado, lang ('es'|'en' for TTS)
 // Texto siempre disponible; microfono opcional con fallback a teclado.
-export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado }) {
+export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voiceMode = true, thinking }) {
   const [texto, setTexto] = useState('');
   const [grabando, setGrabando] = useState(false);
   const [seg, setSeg] = useState(0);
@@ -80,6 +80,12 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado }) {
 
   return (
     <View style={styles.wrap}>
+      <View style={styles.state}>
+        <View style={styles.orb} />
+        <Text style={styles.stateT}>
+          {bloqueado ? 'Conversation ended' : thinking ? 'Thinking about that…' : grabando ? 'I’m listening' : 'Your tutor is ready'}
+        </Text>
+      </View>
       <FlatList
         ref={list}
         data={mensajes}
@@ -99,9 +105,11 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado }) {
       />
       {!!sttMsg && <Text style={styles.stt}>{grabando ? `● REC ${seg}s — ${sttMsg}` : sttMsg}</Text>}
       <View style={styles.row}>
-        <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
-          <Text>{grabando ? '■' : 'Mic'}</Text>
-        </Pressable>
+        {voiceMode && (
+          <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
+            <Text>{grabando ? '■' : 'Mic'}</Text>
+          </Pressable>
+        )}
         <TextInput
           style={styles.input}
           value={texto}
@@ -121,6 +129,9 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado }) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
+  state: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderColor: C.line },
+  orb: { width: 16, height: 16, borderRadius: 8, backgroundColor: C.teal },
+  stateT: { fontSize: 12, color: C.muted, fontWeight: '600' },
   list: { flex: 1, padding: 12 },
   bubble: { padding: 11, borderRadius: R.md, marginBottom: 8, maxWidth: '85%' },
   bubbleText: { fontSize: T.body, lineHeight: 21, color: C.ink },
