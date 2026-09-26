@@ -41,7 +41,8 @@
           "microphonePermission": "Allow LearnSpeak to use the microphone for pronunciation practice."
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {
