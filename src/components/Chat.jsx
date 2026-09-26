@@ -63,6 +63,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
       setSttMsg('Habla... se envia solo al callar.');
     } catch (e) {
       const m = String(e?.message || e);
+      console.log('[mic] start fail:', m.slice(0, 160));
       setSttMsg(m === 'mic-denied' ? 'Permiso de microfono denegado, usa el teclado.' : 'Microfono no disponible, usa el teclado.');
     }
   }
@@ -88,11 +89,9 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
       />
       {!!sttMsg && <Text style={styles.stt}>{sttMsg}</Text>}
       <View style={styles.row}>
-        {isRecorderAvailable() && (
-          <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
-            <Text>{grabando ? '■' : 'Mic'}</Text>
-          </Pressable>
-        )}
+        <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
+          <Text>{grabando ? '■' : 'Mic'}</Text>
+        </Pressable>
         <TextInput
           style={styles.input}
           value={texto}
