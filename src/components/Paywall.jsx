@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { C, R, T } from '../theme';
 import { buyPackage, getOfferings, isMockMode, restore } from '../lib/monetization';
 
 // Simple custom paywall. Works in mock (Expo Go) and live (dev build/APK).
@@ -66,12 +67,12 @@ export default function Paywall({ visible, onClose }) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  card: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20, gap: 10 },
-  title: { fontSize: 22, fontWeight: '700' },
-  sub: { fontSize: 14, opacity: 0.8 },
-  mock: { fontSize: 12, opacity: 0.6, fontStyle: 'italic' },
-  buy: { backgroundColor: '#131317', padding: 14, borderRadius: 10, alignItems: 'center' },
-  buyText: { color: '#fff', fontWeight: '600' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(19,19,23,0.55)', justifyContent: 'flex-end' },
+  card: { backgroundColor: C.bg, borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, padding: 22, gap: 10 },
+  title: { fontSize: T.h, fontWeight: '800', color: C.ink },
+  sub: { fontSize: T.body, color: C.muted, lineHeight: 21 },
+  mock: { fontSize: 12, color: C.muted, fontStyle: 'italic' },
+  buy: { backgroundColor: C.ink, padding: 15, borderRadius: R.md, alignItems: 'center' },
+  buyText: { color: '#fff', fontWeight: '700', fontSize: T.body },
   link: { padding: 10, alignItems: 'center' },
 });

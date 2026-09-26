@@ -4,6 +4,7 @@ import Chat from './src/components/Chat';
 import Paywall from './src/components/Paywall';
 import SessionBar from './src/components/SessionBar';
 import Setup from './src/components/Setup';
+import { C } from './src/theme';
 import { getFeedback, sendMessage } from './src/lib/ai';
 import { initMonetization, isMockMode, isPro } from './src/lib/monetization';
 import { speak, stopSpeak } from './src/lib/voice';
@@ -113,7 +114,7 @@ export default function App() {
         <StatusBar />
         <View style={styles.fin}>
           <Text style={styles.title}>Sesion terminada</Text>
-          <Text>{feedback || 'Generando resumen...'}</Text>
+          <Text style={styles.feedback}>{feedback || 'Generando resumen...'}</Text>
           {!!feedback && (
             <Pressable style={styles.listen} onPress={() => speak(feedback, config.direccion === 'en-es' ? 'en' : 'es')}>
               <Text>Escuchar resumen</Text>
@@ -143,14 +144,15 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  full: { flex: 1, backgroundColor: '#fff' },
+  full: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  pro: { padding: 10, alignItems: 'center', backgroundColor: '#f5f5f5' },
-  proText: { fontSize: 13, fontWeight: '600' },
-  fin: { flex: 1, padding: 20, gap: 12, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '700' },
+  pro: { padding: 11, alignItems: 'center', backgroundColor: C.soft, borderBottomWidth: 1, borderColor: C.line },
+  proText: { fontSize: 13, fontWeight: '700', color: C.ink },
+  fin: { flex: 1, padding: 22, gap: 12, justifyContent: 'center' },
+  title: { fontSize: 24, fontWeight: '800', color: C.ink },
+  feedback: { fontSize: 15, lineHeight: 22, color: C.ink },
   listen: { padding: 10 },
-  go: { backgroundColor: '#131317', borderRadius: 12, padding: 16, alignItems: 'center' },
-  goText: { color: '#fff', fontWeight: '700' },
-  typing: { fontSize: 12, fontStyle: 'italic', opacity: 0.6, paddingHorizontal: 12, paddingBottom: 8 },
+  go: { backgroundColor: C.ink, borderRadius: 12, padding: 16, alignItems: 'center' },
+  goText: { color: '#fff', fontWeight: '800' },
+  typing: { fontSize: 12, fontStyle: 'italic', color: C.muted, paddingHorizontal: 12, paddingBottom: 8 },
 });

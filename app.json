@@ -4,6 +4,12 @@
     "slug": "learn-speak",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f4f4f8"
+    },
     "scheme": "learnspeak",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
@@ -15,6 +21,10 @@
     "android": {
       "package": "com.learnspeak.app",
       "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#131317"
+      },
       "permissions": [
         "RECORD_AUDIO"
       ]
