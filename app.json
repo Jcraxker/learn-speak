@@ -2,7 +2,7 @@
   "expo": {
     "name": "LearnSpeak",
     "slug": "learn-speak",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.learnspeak.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#131317"
