@@ -1,19 +1,29 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { C, R, T } from '../theme';
 import { isRecorderAvailable, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
 
 // Props: mensajes [{rol, texto}], onSend(texto), bloqueado, lang ('es'|'en' for TTS)
 // Texto siempre disponible; microfono opcional con fallback a teclado.
-export default function Chat({ mensajes, onSend, bloqueado, lang }) {
+export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado }) {
   const [texto, setTexto] = useState('');
   const [grabando, setGrabando] = useState(false);
+  const [seg, setSeg] = useState(0);
   const [sttMsg, setSttMsg] = useState('');
   const list = useRef(null);
 
+  useEffect(() => {
+    if (!grabando) {
+      setSeg(0);
+      return;
+    }
+    const id = setInterval(() => setSeg((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [grabando]);
+
   function enviar() {
     const t = texto.trim();
-    if (!t || bloqueado) return;
+    if (!t || bloqueado || ocupado) return;
     setTexto('');
     onSend(t);
   }
@@ -87,7 +97,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
           </View>
         )}
       />
-      {!!sttMsg && <Text style={styles.stt}>{sttMsg}</Text>}
+      {!!sttMsg && <Text style={styles.stt}>{grabando ? `● REC ${seg}s — ${sttMsg}` : sttMsg}</Text>}
       <View style={styles.row}>
         <Pressable style={[styles.mic, grabando && styles.micOn]} onPress={microfono} disabled={bloqueado}>
           <Text>{grabando ? '■' : 'Mic'}</Text>
@@ -101,7 +111,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
           editable={!bloqueado}
           onSubmitEditing={enviar}
         />
-        <Pressable style={styles.send} onPress={() => { stopSpeak(); enviar(); }} disabled={bloqueado}>
+        <Pressable style={[styles.send, ocupado && styles.sendOff]} onPress={() => { stopSpeak(); enviar(); }} disabled={bloqueado || ocupado}>
           <Text style={styles.sendText}>Enviar</Text>
         </Pressable>
       </View>
@@ -122,6 +132,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', padding: 10, gap: 8, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg },
   input: { flex: 1, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, fontSize: T.body, color: C.ink },
   send: { backgroundColor: C.ink, borderRadius: R.pill, paddingHorizontal: 18, justifyContent: 'center' },
+  sendOff: { opacity: 0.4 },
   sendText: { color: '#fff', fontWeight: '700' },
   mic: { borderWidth: 1.5, borderColor: C.ink, borderRadius: R.pill, paddingHorizontal: 13, justifyContent: 'center' },
   micOn: { backgroundColor: C.accent, borderColor: C.accent },
