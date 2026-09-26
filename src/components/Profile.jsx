@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { C, T } from '../theme';
 import { getStats } from '../lib/stats';
 
@@ -33,7 +34,8 @@ export default function Profile({ user, pro, openPaywall, onLogout, nivel }) {
         <Text style={st.planS}>{pro ? 'Sesiones ilimitadas' : '1 conversacion al dia — ver Pro'}</Text>
       </Pressable>
       <Pressable style={st.logout} onPress={onLogout}>
-        <Text style={stylesLogout}>Cerrar sesión</Text>
+        <Ionicons name="log-out-outline" size={16} color={C.danger} />
+        <Text style={stylesLogout}> Cerrar sesión</Text>
       </Pressable>
     </View>
   );
@@ -58,5 +60,5 @@ const st = StyleSheet.create({
   plan: { backgroundColor: C.goldPale, borderRadius: 15, padding: 14 },
   planT: { fontWeight: '800', color: '#765a28', fontSize: 13 },
   planS: { fontSize: 10, color: '#765a28', marginTop: 3 },
-  logout: { borderWidth: 1.5, borderColor: C.danger, borderRadius: 14, padding: 14, alignItems: 'center', marginTop: 6 },
+  logout: { flexDirection: 'row', borderWidth: 1.5, borderColor: C.danger, borderRadius: 14, padding: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
 });

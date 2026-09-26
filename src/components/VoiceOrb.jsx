@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { C } from '../theme';
 
 // Voice orb: idle|listening|thinking|speaking. Pulse when thinking/speaking,
@@ -32,10 +33,13 @@ export default function VoiceOrb({ state, seconds, level = 0, onPress, disabled 
   const bg =
     state === 'listening' ? C.teal : state === 'speaking' ? C.navy : state === 'thinking' ? C.gold : C.navy;
 
+  const glyph =
+    state === 'listening' ? 'stop' : state === 'thinking' ? 'hourglass' : state === 'speaking' ? 'volume-high' : 'mic';
+
   return (
     <Pressable onPress={onPress} disabled={disabled} style={styles.hit}>
       <Animated.View style={[styles.orb, { backgroundColor: bg, transform: [{ scale: pulse }] }]}>
-        <Text style={styles.glyph}>{state === 'listening' ? '●' : state === 'thinking' ? '…' : '◉'}</Text>
+        <Ionicons name={glyph} size={26} color="#fff" />
         {state === 'listening' && <Text style={styles.secs}>{seconds}s</Text>}
       </Animated.View>
     </Pressable>

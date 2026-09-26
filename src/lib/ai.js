@@ -90,7 +90,15 @@ async function callGemini(model, contents) {
 }
 
 export async function sendMessage(history, { nivel, direccion, tema }) {
-  const contents = toGeminiContents(history, buildSystem(nivel, direccion, tema));
+  const topicEn = { viajes: 'travel', musica: 'music', tech: 'technology', futbol: 'football' }[tema] || tema;
+  let h = history && history.length ? history : [{
+    rol: 'user',
+    texto:
+      direccion === 'en-es'
+        ? `Hi! I want to practice English talking about ${topicEn}.`
+        : `Hola! Quiero practicar español hablando de ${tema}.`,
+  }];
+  const contents = toGeminiContents(h, buildSystem(nivel, direccion, tema));
   try {
     return await callGemini(PRIMARY, contents);
   } catch (e) {

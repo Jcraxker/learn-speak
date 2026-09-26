@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { C, R, T } from '../theme';
 import { isSpeaking, speak, stopSpeak, startSmartRecord, stopSmartRecord, transcribeAudio } from '../lib/voice';
 import VoiceOrb from './VoiceOrb';
@@ -142,7 +143,8 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
             <Text style={styles.bubbleText}>{item.texto}</Text>
             {item.rol === 'ai' && (
               <Pressable onPress={() => speak(item.texto, lang)} style={styles.listen}>
-                <Text style={styles.listenText}>Escuchar</Text>
+                <Ionicons name="volume-high" size={14} color={C.surface} />
+                <Text style={styles.listenText}> Escuchar</Text>
               </Pressable>
             )}
           </View>
@@ -164,7 +166,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang, ocupado, voice
           onSubmitEditing={enviar}
         />
         <Pressable style={[styles.send, ocupado && styles.sendOff]} onPress={() => { stopSpeak(); enviar(); }} disabled={bloqueado || ocupado}>
-          <Text style={styles.sendText}>Enviar</Text>
+          <Ionicons name="send" size={16} color="#fff" />
         </Pressable>
       </View>
     </View>
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: T.body, lineHeight: 21, color: C.ink },
   user: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 4 },
   ai: { backgroundColor: C.aiBubble, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
-  listen: { marginTop: 6 },
+  listen: { marginTop: 6, flexDirection: 'row', alignItems: 'center' },
   listenText: { fontSize: 12, fontWeight: '700', color: C.surface },
   stt: { fontSize: 12, fontStyle: 'italic', color: C.muted, paddingHorizontal: 12 },
   orbHint: { fontSize: 11, color: C.muted, textAlign: 'center', paddingTop: 2 },
