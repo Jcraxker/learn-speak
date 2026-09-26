@@ -36,7 +36,7 @@
     },
     "plugins": [
       [
-        "expo-av",
+        "expo-audio",
         {
           "microphonePermission": "Allow LearnSpeak to use the microphone for pronunciation practice."
         }

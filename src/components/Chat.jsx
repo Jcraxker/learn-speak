@@ -98,6 +98,7 @@ export default function Chat({ mensajes, onSend, bloqueado, lang }) {
           value={texto}
           onChangeText={setTexto}
           placeholder={bloqueado ? 'Sesion terminada' : 'Escribe...'}
+          placeholderTextColor={C.muted}
           editable={!bloqueado}
           onSubmitEditing={enviar}
         />
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   listenText: { fontSize: 12, fontWeight: '700', color: C.surface },
   stt: { fontSize: 12, fontStyle: 'italic', color: C.muted, paddingHorizontal: 12 },
   row: { flexDirection: 'row', padding: 10, gap: 8, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg },
-  input: { flex: 1, borderWidth: 1.5, borderColor: C.line, backgroundColor: C.soft, borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, fontSize: T.body },
+  input: { flex: 1, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9, fontSize: T.body, color: C.ink },
   send: { backgroundColor: C.ink, borderRadius: R.pill, paddingHorizontal: 18, justifyContent: 'center' },
   sendText: { color: '#fff', fontWeight: '700' },
   mic: { borderWidth: 1.5, borderColor: C.ink, borderRadius: R.pill, paddingHorizontal: 13, justifyContent: 'center' },
