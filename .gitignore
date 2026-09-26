@@ -26,3 +26,6 @@ npm-debug.log*
 # Editor
 .vscode/
 .idea/
+
+# Internal project memory (local only, like Puente: context, decisions, secrets refs)
+memoria/
