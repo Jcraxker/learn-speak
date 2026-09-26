@@ -2,15 +2,15 @@ import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
 import { C } from '../theme';
 
-// Voice orb like Gemini/ChatGPT: states idle|listening|thinking|speaking.
-// Pulse animation while active. Tap toggles. Seconds shown when listening.
-// Props: state, seconds, onPress, disabled
-export default function VoiceOrb({ state, seconds, onPress, disabled }) {
+// Voice orb: idle|listening|thinking|speaking. Pulse when thinking/speaking,
+// breathes with live mic level when listening. Tap toggles.
+// Props: state, seconds, level (0..1 mic energy), onPress, disabled
+export default function VoiceOrb({ state, seconds, level = 0, onPress, disabled }) {
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (state === 'idle') {
-      pulse.setValue(1);
+    if (state === 'idle' || state === 'listening') {
+      if (state === 'idle') pulse.setValue(1);
       return;
     }
     const loop = Animated.loop(
@@ -21,7 +21,13 @@ export default function VoiceOrb({ state, seconds, onPress, disabled }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [state === 'idle']);
+  }, [state]);
+
+  useEffect(() => {
+    if (state === 'listening') {
+      pulse.setValue(1 + Math.min(1, Math.max(0, level)) * 0.4);
+    }
+  }, [level]);
 
   const bg =
     state === 'listening' ? C.teal : state === 'speaking' ? C.navy : state === 'thinking' ? C.gold : C.navy;
