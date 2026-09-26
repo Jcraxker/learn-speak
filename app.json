@@ -48,6 +48,9 @@
         "projectId": "318b8697-e8fb-4021-9252-48f3298033b4"
       }
     },
-    "owner": "jcraxker"
+    "owner": "jcraxker",
+    "updates": {
+      "url": "https://u.expo.dev/318b8697-e8fb-4021-9252-48f3298033b4"
+    }
   }
 }
